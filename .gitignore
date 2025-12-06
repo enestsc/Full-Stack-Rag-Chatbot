@@ -1,0 +1,31 @@
+# Environment Variables
+.env
+
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Database & Storage
+backend/chroma_db/
+backend/chat_history.db
+*.sqlite3
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Project Specific
+memory-bank/
+memorybank
+.gemini/
+.idea/
+.vscode/
+build/
+dist/
+.next/
+coverage/
+cv/*
+!cv/.gitkeep
+cv.pdf
