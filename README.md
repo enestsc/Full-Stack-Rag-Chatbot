@@ -61,16 +61,17 @@ On startup, the backend will:
 
 ## 🏗 Architecture
 
-graph TD
-    %% --- Renk ve Stil Tanımları ---
+<pre>
+    graph TD
+    %% --- Renk ve Stil Tanımları (Dark Mode Uyumlu) ---
     classDef user fill:#212121,stroke:#fff,stroke-width:2px,color:#fff;
     classDef frontend fill:#0288d1,stroke:#01579b,stroke-width:2px,color:#fff;
     classDef backend fill:#2e7d32,stroke:#1b5e20,stroke-width:2px,color:#fff;
     classDef db fill:#f57c00,stroke:#e65100,stroke-width:2px,color:#fff;
     classDef ai fill:#7b1fa2,stroke:#4a148c,stroke-width:2px,color:#fff;
-    classDef external fill:#455a64,stroke:#263238,stroke-width:2px,stroke-dasharray: 5 5,color:#fff;
+    classDef external fill:#546e7a,stroke:#37474f,stroke-width:2px,stroke-dasharray: 5 5,color:#fff;
 
-    %% --- Düğümler (Nodes) ---
+    %% --- Düğümler (Kutucuklar) ---
     User((👤 User / Recruiter)):::user
     
     subgraph "Docker Container: Frontend"
@@ -112,5 +113,7 @@ graph TD
     PDF -.->|Parse Text| Ingest
     Ingest -.->|Embed & Upsert| Chroma
 
-    %% --- Link Stilleri ---
+    %% --- Link Stilleri (Okların Renkleri) ---
     linkStyle 9,10,11 stroke:#f57c00,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 6,7,8 stroke:#7b1fa2,stroke-width:2px;
+</pre>
