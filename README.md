@@ -4,7 +4,7 @@ DevTwin is an intelligent RAG (Retrieval-Augmented Generation) system designed t
 
 Deployed with **Next.js 16**, **React 19**, **Tailwind CSS v4**, **FastAPI**, **LangChain**, and **ChromaDB**.
 
-<img width="1703" height="956" alt="Ekran Resmi 2025-12-08 17 36 57" src="https://github.com/user-attachments/assets/64636228-a84b-401a-a741-61fdeab93228" />
+<img width="1710" height="938" alt="Ekran Resmi 2025-12-09 11 30 55" src="https://github.com/user-attachments/assets/945fe4b3-3351-48cf-84a0-a395649d586e" />
 
 
 ## 🚀 Key Features
