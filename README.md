@@ -1,100 +1,75 @@
-# Full Stack RAG Chatbot (Dockerized)
+# DevTwin: AI Portfolio Assistant
 
-A production-ready, containerized chatbot application that uses Retrieval-Augmented Generation (RAG) to answer questions based on a specific Curriculum Vitae (CV). The project is built with a **FastAPI** backend, a **Next.js** frontend, and uses **Groq** for high-speed LLM inference, orchestrated via **Docker Compose**.
+DevTwin is an intelligent RAG (Retrieval-Augmented Generation) system designed to act as a **Technical Recruiter & Advocate**. It ingests your CV (PDF) and scans your **GitHub Public Repositories** to answer questions about your skills, projects, and coding style in depth.
 
-## 🚀 Features
+Deployed with **Next.js 16**, **React 19**, **Tailwind CSS v4**, **FastAPI**, **LangChain**, and **ChromaDB**.
 
--   **RAG Architecture**: Uses a local vector database (ChromaDB) to retrieve relevant context from the CV before answering.
--   **Model**: Powered by **Llama-3.3-70b-versatile** via the Groq API for lightning-fast responses.
--   **Embeddings**: Uses local HuggingFace embeddings (`all-MiniLM-L6-v2`) via CPU-optimized PyTorch.
--   **Chat History**: Persists user conversations using SQLite.
--   **Modern UI**: Responsive chat interface built with Next.js, Tailwind CSS, and Shadcn UI.
--   **Dockerized**: Full stack (Frontend + Backend + Database) runs with a single command.
--   **Auto-Scroll**: Chat interface automatically scrolls to the latest message.
+![DevTwin UI](https://placehold.co/800x400?text=DevTwin+Dashboard)
 
-## 🛠️ Tech Stack
+## 🚀 Key Features
 
-### Backend
--   **Framework**: FastAPI (Python)
--   **LLM API**: Groq (Llama 3.3)
--   **Orchestration**: LangChain (LCEL)
--   **Vector DB**: ChromaDB (Local Persistence)
--   **Database**: SQLite (SQLAlchemy ORM)
--   **Embeddings**: HuggingFace (`sentence-transformers`)
+*   **Intelligent RAG**: Uses Groq (Llama 3.3) to reason about your experience.
+*   **Recruiter Persona**: The AI proactively advocates for your fitness for a role, citing specific project examples.
+*   **GitHub Auto-Sync**: Automatically fetches your public repositories, extracting READMEs, descriptions, and languages on startup.
+*   **Multi-Language Support**: Seamlessly toggles between **Turkish (TR)** and **English (EN)** for international opportunities.
+*   **Deep Context**: Merges CV data with live code analysis to provide "Connect the Dots" answers (e.g., linking Usage of Kafka to Distributed Systems knowledge).
+*   **Modern Chat UI**: A polished, responsive interface with history, auto-scroll, and language controls.
 
-### Frontend
--   **Framework**: Next.js 14 (React)
--   **Language**: TypeScript
--   **Styling**: Tailwind CSS
--   **Components**: Shadcn UI & Lucide React
--   **State Management**: React Hooks
+## 🛠 Tech Stack
 
-### DevOps
--   **Containerization**: Docker & Docker Compose
--   **Optimization**: CPU-only PyTorch build for smaller image sizes.
+*   **Frontend**: Next.js 16, React 19, Tailwind CSS v4, Lucide React, Axios.
+*   **Backend**: FastAPI, LangChain, LangServe.
+*   **AI Engine**: Groq (Llama-3.3-70b-versatile).
+*   **Vector DB**: ChromaDB (with local persistence).
+*   **Infrastructure**: Docker & Docker Compose.
 
----
+## 🏃‍♂️ Setup & Run
 
-## 🏃‍♂️ How to Run
+### 1. Prerequisites
+*   Docker & Docker Compose installed.
+*   A [GitHub Token](https://github.com/settings/tokens) (Public Repo scope).
+*   A [Groq API Key](https://console.groq.com/keys).
 
-### Prerequisites
--   Docker & Docker Compose installed.
--   A [Groq API Key](https://console.groq.com/).
-
-### 1. Clone the Repository
+### 2. Clone & Configure
 ```bash
-git clone <your-repo-url>
-cd ragchatbot
+git clone https://github.com/your-username/DevTwin.git
+cd DevTwin
 ```
 
-### 2. Configure Environment
 Create a `.env` file in the root directory:
 ```bash
-GROQ_API_KEY=gsk_your_api_key_here
+GROQ_API_KEY=gsk_your_key_here
+GITHUB_TOKEN=ghp_your_token_here
+GITHUB_USERNAME=your_github_username
 ```
 
-### 3. Build and Start
-Run the following command to build the Docker images and start the services:
+### 3. Run with Docker
 ```bash
+# Builds images and starts containers
 docker-compose up --build
 ```
-This might take a few minutes the first time as it downloads necessary dependencies (Checking for CPU-optimized PyTorch).
+*   **Frontend**: [http://localhost:3000](http://localhost:3000)
+*   **Backend API**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-Once running:
--   **Frontend**: [http://localhost:3000](http://localhost:3000)
--   **Backend**: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+### 4. Data Ingestion
+On startup, the backend will:
+1.  Fetch all public repos for `GITHUB_USERNAME`.
+2.  Save a raw dump to `./data/github_raw.json`.
+3.  Generate a report at `./data/ingestion_report.md`.
+4.  Ingest everything into ChromaDB.
 
-### 4. Ingest the CV (First Time Only)
-To populate the vector database with the CV information, run the ingestion script inside the backend container:
-```bash
-docker-compose exec backend python ingest.py
-```
-*Note: Make sure your `cv.pdf` is located in the `cv/` directory in the root folder.*
+## 🏗 Architecture
 
-### 5. Chat
-Open [http://localhost:3000](http://localhost:3000) and start asking questions about the CV!
-
----
-
-## 📂 Project Structure
-
-```
-├── backend/
-│   ├── main.py          # FastAPI Application & RAG Logic
-│   ├── database.py      # SQLite Database Models
-│   ├── ingest.py        # PDF Ingestion Script
-│   ├── requirements.txt # Python Dependencies
-│   └── Dockerfile       # Backend Docker Image (CPU Optimized)
-├── frontend/
-│   ├── app/             # Next.js Pages & Components
-│   └── Dockerfile       # Frontend Docker Image
-├── cv/
-│   └── cv.pdf           # The Source Document
-├── docker-compose.yml   # Service Orchestration
-└── .env                 # API Keys (Not committed)
+```mermaid
+graph TD
+    A[User (Frontend)] -->|POST /chat (Message, Lang)| B(FastAPI Backend)
+    B -->|Ingest| C{GitHub API & CV.pdf}
+    C -->|Documents| D[ChromaDB (Vector Store)]
+    B -->|Retrieve Context| D
+    B -->|Context + Prompt| E[Groq LLM (Llama 3)]
+    E -->|Answer| B
+    B -->|JSON Response| A
 ```
 
-## 🐛 Troubleshooting
-
--   **OOM (Out Of Memory) during Ingestion**: Ensure your Docker has enough memory allocated (4GB+ recommended), though the CPU-optimization should mitigate this.
--   **500 Errors**: Check if your Groq API Key is valid and set in the `.env` file.
+## 📄 License
+MIT

@@ -1,15 +1,12 @@
 "use client"
-
 import * as React from "react"
 import axios from "axios"
-import { Send, MessageSquare, User, Bot, Loader2 } from "lucide-react"
+import { Send, MessageSquare, User, Bot, Loader2, Github } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 
 const API_URL = "http://localhost:8000"
 
@@ -27,23 +24,25 @@ interface HistoryItem {
 
 export default function ChatPage() {
   const [messages, setMessages] = React.useState<Message[]>([
-    { role: "bot", content: "Hello! I am ready to answer questions about the CV." }
+    { role: "bot", content: "Hello! I am ready to answer questions about the CV and GitHub projects." }
   ])
   const [input, setInput] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [history, setHistory] = React.useState<HistoryItem[]>([])
+  const [language, setLanguage] = React.useState<"tr" | "en">("tr")
 
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     fetchHistory()
   }, [])
 
+  // Auto-scroll to bottom when messages change
   React.useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollIntoView({ behavior: "smooth" })
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, loading])
+  }, [messages, loading]);
 
   const fetchHistory = async () => {
     try {
@@ -63,9 +62,12 @@ export default function ChatPage() {
     setLoading(true)
 
     try {
-      const res = await axios.post(`${API_URL}/chat`, { message: userMsg })
+      const res = await axios.post(`${API_URL}/chat`, {
+        message: userMsg,
+        language: language
+      })
       setMessages((prev) => [...prev, { role: "bot", content: res.data.answer }])
-      fetchHistory() // Refresh history after valid exchange
+      fetchHistory()
     } catch (err) {
       console.error("Chat error", err)
       setMessages((prev) => [...prev, { role: "bot", content: "Sorry, something went wrong." }])
@@ -75,96 +77,158 @@ export default function ChatPage() {
   }
 
   const loadHistoryItem = (item: HistoryItem) => {
+    // Inject both the Question and the Answer into the chat window
     setMessages([
       { role: "user", content: item.user_query },
       { role: "bot", content: item.bot_response }
     ])
   }
 
+  const handleLanguageChange = (lang: "tr" | "en") => {
+    setLanguage(lang)
+  }
+
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <div className="w-64 border-r hidden md:flex flex-col bg-muted/40 p-4">
-        <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
-          <MessageSquare className="w-5 h-5" /> Recent Chats
-        </h2>
-        <ScrollArea className="flex-1">
-          <div className="space-y-2">
+    // ROOT: Fixed Viewport Strategy
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-background text-foreground font-sans">
+
+      {/* 1. Header: Fixed height, never moves */}
+      <header className="flex-none h-16 border-b flex items-center justify-between px-6 bg-background/95 backdrop-blur z-20 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Bot className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold leading-tight">DevTwin</h1>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              Powered by Groq & <Github className="w-3 h-3" /> Graph
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-muted rounded-full p-1 border">
+            <button
+              onClick={() => handleLanguageChange("tr")}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium transition-all",
+                language === "tr" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              TR
+            </button>
+            <button
+              onClick={() => handleLanguageChange("en")}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium transition-all",
+                language === "en" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. Content Wrapper: Fills remaining vertical space */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* Sidebar: Fixed width, scrolls independently */}
+        <aside className="w-64 flex-none border-r hidden md:flex flex-col bg-muted/20 overflow-hidden">
+          <div className="p-4 border-b flex items-center gap-2 font-semibold flex-none">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            <span>Recent Chats</span>
+          </div>
+          {/* History List: Flex-1 to fill space, overflow-auto to scroll */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {history.map((item) => (
               <Button
                 key={item.id}
                 variant="ghost"
-                className="w-full justify-start text-left text-sm truncate h-auto py-2"
+                // truncate: force one line with ellipsis
+                className="w-full justify-start text-left text-sm h-9 px-3 truncate block"
                 onClick={() => loadHistoryItem(item)}
+                title={item.user_query}
               >
-                <div className="truncate w-full">
+                <span className="truncate w-full block">
                   {item.user_query}
-                </div>
+                </span>
               </Button>
             ))}
           </div>
-        </ScrollArea>
-      </div>
+        </aside>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        <header className="border-b p-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">RAG Chatbot</h1>
-        </header>
+        {/* Chat Area: Flex-1, manages its own scrolling */}
+        <main className="flex-1 flex flex-col relative overflow-hidden bg-muted/5">
 
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4 max-w-3xl mx-auto">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "flex items-start gap-3",
-                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
-                )}
+          {/* Messages Scroll: The ONLY part that should scroll */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth">
+            <div className="max-w-3xl mx-auto space-y-6 pb-4">
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                    msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                  )}
+                >
+                  <div className={cn(
+                    "w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm border",
+                    msg.role === "user" ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border"
+                  )}>
+                    {msg.role === "user" ? <User size={18} /> : <Bot size={18} />}
+                  </div>
+                  <div className={cn(
+                    "rounded-2xl p-4 max-w-[85%] shadow-sm",
+                    msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card border text-card-foreground rounded-tl-sm"
+                  )}>
+                    <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div className="flex items-start gap-4 animate-pulse">
+                  <div className="w-9 h-9 rounded-full bg-background border flex items-center justify-center shrink-0">
+                    <Bot size={18} />
+                  </div>
+                  <div className="bg-card border rounded-2xl p-4 rounded-tl-sm">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Analyzing portfolio...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={scrollRef} />
+            </div>
+          </div>
+
+          {/* Input Area: Fixed at bottom */}
+          <div className="flex-none border-t p-4 bg-background">
+            <div className="max-w-3xl mx-auto flex gap-3 relative">
+              <Input
+                placeholder={language === "tr" ? "Bir soru sorun..." : "Ask a question..."}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                disabled={loading}
+                className="flex-1 h-12 pl-4 pr-12 rounded-full border-muted-foreground/20 focus-visible:ring-primary/20 shadow-sm transition-all"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={loading || !input.trim()}
+                size="icon"
+                className="absolute right-1 top-1 h-10 w-10 rounded-full"
               >
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  {msg.role === "user" ? <User size={16} /> : <Bot size={16} />}
-                </div>
-                <div className={cn(
-                  "rounded-lg p-3 max-w-[80%]",
-                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                )}>
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex items-start gap-3">
-                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                   <Bot size={16} />
-                 </div>
-                 <div className="bg-muted rounded-lg p-3">
-                   <Loader2 className="w-4 h-4 animate-spin" />
-                 </div>
-              </div>
-            )}
-            <div ref={scrollAreaRef as any} /> 
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-center text-[10px] text-muted-foreground mt-2">
+              DevTwin can make mistakes. Please verify important information.
+            </p>
           </div>
-        </ScrollArea>
 
-        <div className="border-t p-4 bg-background">
-          <div className="max-w-3xl mx-auto flex gap-2">
-            <Input
-              placeholder="Ask a question about the CV..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              disabled={loading}
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={loading || !input.trim()}>
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   )

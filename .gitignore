@@ -17,8 +17,7 @@ backend/chat_history.db
 Thumbs.db
 
 # Project Specific
-memory-bank/
-memorybank
+
 .gemini/
 .idea/
 .vscode/
@@ -29,3 +28,8 @@ coverage/
 cv/*
 !cv/.gitkeep
 cv.pdf
+
+# User Specific
+memory-bank/
+data/*.json
+data/*.md
